@@ -90,3 +90,6 @@ npm install
 - Create your feature branch
 - Commit your changes
 - Push and open a Pull Request
+#### *For features to implement check out the [feature issues](https://github.com/quantum2code/habit-tracker/issues)*
+
+#### *For any query ask us on our discord channel*
