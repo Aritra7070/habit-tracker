@@ -1,7 +1,14 @@
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const UPPERCASE_REGEX = /[A-Z]/;
 const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 const MIN_PASSWORD_LENGTH = 6;
+
+export function validateName(name) {
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return { valid: false, message: "Name is required" };
+  }
+
+  return { valid: true };
+}
 
 export function validateEmail(email) {
   if (!email || typeof email !== "string") {
@@ -24,13 +31,6 @@ export function validatePassword(password) {
     return {
       valid: false,
       message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-    };
-  }
-
-  if (!UPPERCASE_REGEX.test(password)) {
-    return {
-      valid: false,
-      message: "Password must contain at least one uppercase letter",
     };
   }
 

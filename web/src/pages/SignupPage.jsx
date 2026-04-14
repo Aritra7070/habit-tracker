@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const UPPERCASE_REGEX = /[A-Z]/;
 const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 const MIN_PASSWORD_LENGTH = 6;
 
-function validateForm(email, password, confirmPassword) {
+function validateForm(name, email, password) {
+  if (!name.trim()) {
+    return "Name is required";
+  }
+
   if (!email.trim()) {
     return "Email is required";
   }
@@ -19,25 +22,17 @@ function validateForm(email, password, confirmPassword) {
     return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
   }
 
-  if (!UPPERCASE_REGEX.test(password)) {
-    return "Password must contain at least one uppercase letter";
-  }
-
   if (!SPECIAL_CHAR_REGEX.test(password)) {
     return "Password must contain at least one special character";
-  }
-
-  if (password !== confirmPassword) {
-    return "Passwords do not match";
   }
 
   return null;
 }
 
 export default function SignupPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +43,7 @@ export default function SignupPage() {
     e.preventDefault();
     setError("");
 
-    const validationError = validateForm(email, password, confirmPassword);
+    const validationError = validateForm(name, email, password);
     if (validationError) {
       setError(validationError);
       return;
@@ -57,7 +52,7 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      await signup(email, password);
+      await signup(name, email, password);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.message);
@@ -85,6 +80,24 @@ export default function SignupPage() {
                 {error}
               </div>
             )}
+
+            <div>
+              <label
+                htmlFor="signup-name"
+                className="mb-1.5 block text-sm font-medium text-surface-300"
+              >
+                Full name
+              </label>
+              <input
+                id="signup-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                autoComplete="name"
+                className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-white placeholder-surface-500 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
 
             <div>
               <label
@@ -116,25 +129,7 @@ export default function SignupPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 chars, uppercase + special"
-                autoComplete="new-password"
-                className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-white placeholder-surface-500 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="signup-confirm-password"
-                className="mb-1.5 block text-sm font-medium text-surface-300"
-              >
-                Confirm password
-              </label>
-              <input
-                id="signup-confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your password"
+                placeholder="Min 6 chars, one special character"
                 autoComplete="new-password"
                 className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-white placeholder-surface-500 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />

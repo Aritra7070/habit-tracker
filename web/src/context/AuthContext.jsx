@@ -49,10 +49,10 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }
 
-  async function signup(email, password) {
+  async function signup(name, email, password) {
     const data = await apiRequest("/api/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ name, email, password }),
     });
 
     saveSession(data.token, data.user);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import { validateEmail, validatePassword } from "../utils/validate.js";
+import { validateName, validateEmail, validatePassword } from "../utils/validate.js";
 
 const router = Router();
 const TOKEN_EXPIRY = "7d";
@@ -15,7 +15,12 @@ function signToken(userId) {
 // POST /api/auth/signup
 router.post("/signup", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
+
+    const nameCheck = validateName(name);
+    if (!nameCheck.valid) {
+      return res.status(400).json({ error: nameCheck.message });
+    }
 
     const emailCheck = validateEmail(email);
     if (!emailCheck.valid) {
@@ -32,12 +37,12 @@ router.post("/signup", async (req, res) => {
       return res.status(409).json({ error: "Email is already registered" });
     }
 
-    const user = await User.create({ email, password });
+    const user = await User.create({ name, email, password });
     const token = signToken(user._id);
 
     res.status(201).json({
       token,
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -73,7 +78,7 @@ router.post("/signin", async (req, res) => {
 
     res.json({
       token,
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
     console.error("Signin error:", err);
