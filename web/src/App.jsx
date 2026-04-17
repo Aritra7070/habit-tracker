@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SigninPage from "./pages/SigninPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import Habits from "./pages/Habits";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       {/* Protected routes — redirect to signin if not logged in */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/habits" element={<Habits />} />
       </Route>
 
       {/* Catch-all: redirect to dashboard (which itself redirects to signin if needed) */}

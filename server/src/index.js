@@ -10,6 +10,8 @@ import express from "express";
 import cors from "cors";
 import { connectDB } from "./db.js";
 import authRoutes from "./routes/auth.routes.js";
+import habitRoutes from "./routes/habits.routes.js";
+import { requireAuth } from "./middleware/auth.middleware.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,6 +26,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/habits", requireAuth, habitRoutes);
 
 app.get("/", (req, res) => {
   res.send("Habit Tracker API is running");
