@@ -84,7 +84,7 @@ export default function Habits() {
                 <HabitCard
                   key={h._id}
                   habit={h}
-                  onToggleComplete={toggleCompletion}
+                  onToggleToday={toggleCompletion}
                   onEdit={openEdit}
                   onDelete={setDeleteTarget}
                 />
