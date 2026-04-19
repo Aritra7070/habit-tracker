@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useHabits } from "../hooks/useHabits";
 
 export default function DashboardPage() {
-  const { habits, isLoading } = useHabits();
+  const { habits } = useHabits();
   const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];

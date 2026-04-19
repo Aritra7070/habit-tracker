@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
       const parsed = parseToken(storedToken);
 
       if (parsed) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setToken(storedToken);
         setUser(parsed);
       } else {
@@ -80,6 +81,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
 

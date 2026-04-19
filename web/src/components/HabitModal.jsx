@@ -6,6 +6,8 @@ export default function HabitModal({ habit, onSave, onClose }) {
   const [name, setName] = useState("");
   const [schedule, setSchedule] = useState([]);
   const [goal, setGoal] = useState("");
+  const [hasReminder, setHasReminder] = useState(false);
+  const [reminderTime, setReminderTime] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const isEditing = Boolean(habit);
@@ -15,6 +17,8 @@ export default function HabitModal({ habit, onSave, onClose }) {
       setName(habit.name);
       setSchedule(habit.schedule || []);
       setGoal(habit.goal || "");
+      setHasReminder(habit.hasReminder || false);
+      setReminderTime(habit.reminderTime || "");
     }
   }, [habit]);
 
@@ -28,9 +32,10 @@ export default function HabitModal({ habit, onSave, onClose }) {
     e.preventDefault();
     setError("");
     if (!name.trim()) { setError("Name is required"); return; }
+    if (hasReminder && !reminderTime) { setError("Reminder time is required"); return; }
     setIsSaving(true);
     try {
-      await onSave({ name: name.trim(), schedule, goal: goal.trim() });
+      await onSave({ name: name.trim(), schedule, goal: goal.trim(), hasReminder, reminderTime: hasReminder ? reminderTime : "" });
       onClose();
     } catch (err) {
       setError(err.message);
@@ -86,6 +91,27 @@ export default function HabitModal({ habit, onSave, onClose }) {
             </label>
             <textarea id="habit-goal" value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="e.g. Run 5km every session" rows={2}
               className="w-full text-[13px] border border-surface-200 rounded-xl px-3.5 py-2.5 text-surface-800 placeholder-surface-400 outline-none focus:border-accent-400 focus:ring-2 focus:ring-accent-100 transition-all resize-none" />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[13px] font-medium text-surface-600">Enable reminder</span>
+              <button 
+                type="button"
+                onClick={() => setHasReminder(!hasReminder)}
+                className={`cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 ${hasReminder ? 'bg-accent-500' : 'bg-surface-300'}`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${hasReminder ? 'translate-x-[18px]' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            
+            {hasReminder && (
+              <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label htmlFor="reminder-time" className="block text-[13px] font-medium text-surface-600 mb-1.5">Reminder time</label>
+                <input id="reminder-time" type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)}
+                  className="w-full text-[14px] border border-surface-200 rounded-xl px-3.5 py-2.5 text-surface-800 placeholder-surface-400 outline-none focus:border-accent-400 focus:ring-2 focus:ring-accent-100 transition-all [&::-webkit-datetime-edit]:outline-none [&::-webkit-datetime-edit-fields-wrapper]:outline-none [&::-webkit-datetime-edit-hour-field]:focus:bg-accent-100 [&::-webkit-datetime-edit-minute-field]:focus:bg-accent-100 [&::-webkit-datetime-edit-hour-field]:focus:text-accent-700 [&::-webkit-datetime-edit-minute-field]:focus:text-accent-700" />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2.5 pt-2">

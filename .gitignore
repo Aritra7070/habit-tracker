@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 .vite/
 
 issues.md
+
+instructions.md
+report.md

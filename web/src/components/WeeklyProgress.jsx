@@ -6,7 +6,7 @@ const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
  * Each day that is scheduled shows as toggleable.
  * Completed days show as solid fills, scheduled-only as dotted outlines.
  */
-export default function WeeklyProgress({ schedule, completedToday, onToggleDay, habitId }) {
+export default function WeeklyProgress({ schedule, completedToday, onToggleDay }) {
   return (
     <div className="flex items-center gap-1.5">
       {DAY_NAMES.map((day, i) => {

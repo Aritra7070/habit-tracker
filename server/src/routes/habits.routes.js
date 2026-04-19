@@ -15,10 +15,31 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/habits/reminders — list habits with reminders for the current day
+router.get("/reminders", async (req, res) => {
+  try {
+    const habits = await Habit.find({ 
+      userId: req.userId,
+      hasReminder: true
+    });
+
+    const validDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const todayStr = validDays[new Date().getDay()];
+    
+    const todaysHabits = habits.filter(h => 
+      h.schedule && h.schedule.includes(todayStr)
+    );
+
+    res.json(todaysHabits);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch reminders" });
+  }
+});
+
 // POST /api/habits — create a new habit
 router.post("/", async (req, res) => {
   try {
-    const { name, schedule, goal } = req.body;
+    const { name, schedule, goal, hasReminder, reminderTime } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: "Name is required" });
@@ -29,6 +50,8 @@ router.post("/", async (req, res) => {
       name: name.trim(),
       schedule: schedule || [],
       goal: goal?.trim() || "",
+      hasReminder: hasReminder || false,
+      reminderTime: reminderTime || "",
     });
 
     res.status(201).json(habit);
@@ -44,7 +67,7 @@ router.post("/", async (req, res) => {
 // PUT /api/habits/:id — update an existing habit
 router.put("/:id", async (req, res) => {
   try {
-    const { name, schedule, goal } = req.body;
+    const { name, schedule, goal, hasReminder, reminderTime } = req.body;
 
     if (name !== undefined && !name.trim()) {
       return res.status(400).json({ error: "Name cannot be empty" });
@@ -54,6 +77,8 @@ router.put("/:id", async (req, res) => {
     if (name !== undefined) updates.name = name.trim();
     if (schedule !== undefined) updates.schedule = schedule;
     if (goal !== undefined) updates.goal = goal.trim();
+    if (hasReminder !== undefined) updates.hasReminder = hasReminder;
+    if (reminderTime !== undefined) updates.reminderTime = reminderTime;
 
     const habit = await Habit.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
