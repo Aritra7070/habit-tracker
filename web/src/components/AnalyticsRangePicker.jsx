@@ -19,18 +19,21 @@ export default function AnalyticsRangePicker({
     range.selectedStartKey && range.selectedEndKey
       ? formatRangeLabel(range.selectedStartKey, range.selectedEndKey)
       : "Select a range to view analytics";
+  const rangeBadge = `${RANGE_OPTIONS.find((option) => option.key === rangeType)?.label || "Range"} | ${selectedLabel}`;
 
   return (
-    <section className="rounded-[20px] border border-surface-200 bg-white px-5 py-5 shadow-sm shadow-surface-200/60">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <section className="min-h-[230px] rounded-[24px] border border-accent-200/70 bg-white px-5 py-5 shadow-[0_16px_34px_rgba(124,92,255,0.12)]">
+      <div className="flex flex-col gap-5">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent-500">
-            Time range
+            Range control
           </p>
-          <h2 className="mt-2 text-[20px] font-semibold text-surface-800">
-            {range.label}
+          <h2 className="mt-2 text-[22px] font-semibold text-surface-800">
+            Choose the window you want to measure.
           </h2>
-          <p className="mt-1 text-[13px] text-surface-500">{selectedLabel}</p>
+          <p className="mt-2 inline-flex rounded-full bg-accent-100 px-3.5 py-1.5 text-[13px] font-semibold text-accent-700 shadow-sm shadow-accent-100/80">
+            {rangeBadge}
+          </p>
           {range.hasFutureInTimeline && (
             <p className="mt-2 text-[12px] text-surface-400">
               Future dates are shown for context and excluded from the calculation.
@@ -38,7 +41,7 @@ export default function AnalyticsRangePicker({
           )}
         </div>
 
-        <div className="inline-flex rounded-2xl border border-surface-200 bg-surface-50 p-1">
+        <div className="inline-flex w-fit rounded-2xl bg-surface-100 p-1.5 shadow-inner shadow-surface-200/60 ring-1 ring-accent-100/80">
           {RANGE_OPTIONS.map((option) => {
             const isActive = option.key === rangeType;
 
@@ -47,7 +50,7 @@ export default function AnalyticsRangePicker({
                 key={option.key}
                 type="button"
                 onClick={() => onRangeChange(option.key)}
-                className={`cursor-pointer rounded-xl px-4 py-2 text-[13px] font-medium transition-all ${
+                className={`cursor-pointer rounded-xl px-4 py-2 text-[13px] font-medium transition-all active:scale-[0.98] ${
                   isActive
                     ? "bg-accent-500 text-white shadow-sm shadow-accent-200"
                     : "text-surface-500 hover:bg-white hover:text-surface-800"
@@ -60,8 +63,14 @@ export default function AnalyticsRangePicker({
         </div>
       </div>
 
-      {rangeType === "custom" && (
-        <div className="mt-4 grid gap-3 border-t border-surface-100 pt-4 md:grid-cols-2">
+      <div
+        className={`grid overflow-hidden transition-all duration-300 ease-out ${
+          rangeType === "custom"
+            ? "mt-4 max-h-40 opacity-100"
+            : "mt-0 max-h-0 opacity-0"
+        }`}
+      >
+        <div className="grid gap-3 border-t border-surface-100 pt-4 md:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-surface-400">
               Start date
@@ -86,7 +95,7 @@ export default function AnalyticsRangePicker({
             />
           </label>
         </div>
-      )}
+      </div>
     </section>
   );
 }
