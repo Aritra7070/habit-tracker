@@ -5,6 +5,8 @@ import HabitCard from "../components/HabitCard";
 import HabitModal from "../components/HabitModal";
 import DeleteConfirm from "../components/DeleteConfirm";
 import NotesPanel from "../components/NotesPanel";
+import HabitFilterBar from "../components/HabitFilterBar";
+import { filterAndSort } from "../utils/filterSortHabits";
 
 export default function Habits() {
   const { habits, isLoading, error, createHabit, updateHabit, deleteHabit, toggleCompletion } =
@@ -14,6 +16,7 @@ export default function Habits() {
   const [modalHabit, setModalHabit] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [filters, setFilters] = useState({ status: 'all', sortBy: 'default' });
 
   function openCreate() {
     setModalHabit(null);
@@ -29,6 +32,9 @@ export default function Habits() {
     setShowModal(false);
     setModalHabit(null);
   }
+
+  // Derive filtered+sorted list
+  const visibleHabits = filterAndSort(habits, filters);
 
   async function handleSave(data) {
     if (modalHabit) await updateHabit(modalHabit._id, data);
@@ -79,17 +85,32 @@ export default function Habits() {
           {habits.length === 0 ? (
             <EmptyHabits onAdd={openCreate} />
           ) : (
-            <div className="grid gap-3">
-              {habits.map((h) => (
-                <HabitCard
-                  key={h._id}
-                  habit={h}
-                  onToggleToday={toggleCompletion}
-                  onEdit={openEdit}
-                  onDelete={setDeleteTarget}
-                />
-              ))}
-            </div>
+            <>
+              <HabitFilterBar filters={filters} onChange={setFilters} />
+              {visibleHabits.length === 0 && habits.length > 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <p className="text-sm">No habits match this filter.</p>
+                  <button
+                    onClick={() => setFilters({ status: 'all', sortBy: 'default' })}
+                    className="mt-2 text-xs text-purple-600 hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {visibleHabits.map((h) => (
+                    <HabitCard
+                      key={h._id}
+                      habit={h}
+                      onToggleToday={toggleCompletion}
+                      onEdit={openEdit}
+                      onDelete={setDeleteTarget}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
 
