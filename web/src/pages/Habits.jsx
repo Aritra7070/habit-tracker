@@ -6,17 +6,16 @@ import HabitModal from "../components/HabitModal";
 import DeleteConfirm from "../components/DeleteConfirm";
 import NotesPanel from "../components/NotesPanel";
 import HabitFilterBar from "../components/HabitFilterBar";
-import { filterAndSort } from "../utils/filterSortHabits";
 
 export default function Habits() {
+  const [filters, setFilters] = useState({ status: 'all', sortBy: 'default' });
   const { habits, isLoading, error, createHabit, updateHabit, deleteHabit, toggleCompletion } =
-    useHabits();
+    useHabits(filters);
   const { notes, isLoading: notesLoading, createNote, deleteNote } = useNotes();
 
   const [modalHabit, setModalHabit] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [filters, setFilters] = useState({ status: 'all', sortBy: 'default' });
 
   function openCreate() {
     setModalHabit(null);
@@ -32,9 +31,6 @@ export default function Habits() {
     setShowModal(false);
     setModalHabit(null);
   }
-
-  // Derive filtered+sorted list
-  const visibleHabits = filterAndSort(habits, filters);
 
   async function handleSave(data) {
     if (modalHabit) await updateHabit(modalHabit._id, data);
@@ -82,12 +78,16 @@ export default function Habits() {
 
       <div className="flex gap-5">
         <div className="min-w-0 flex-[7]">
-          {habits.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-accent-200 border-t-accent-500" />
+            </div>
+          ) : habits.length === 0 && filters.status === 'all' && filters.sortBy === 'default' ? (
             <EmptyHabits onAdd={openCreate} />
           ) : (
             <>
               <HabitFilterBar filters={filters} onChange={setFilters} />
-              {visibleHabits.length === 0 && habits.length > 0 ? (
+              {habits.length === 0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-12 text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
                     <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -107,11 +107,11 @@ export default function Habits() {
                 <>
                   <div className="mb-4 flex items-center justify-between">
                     <span className="text-xs text-gray-500 font-medium">
-                      Showing <span className="text-gray-700 font-semibold">{visibleHabits.length}</span> {visibleHabits.length === 1 ? 'habit' : 'habits'}
+                      Showing <span className="text-gray-700 font-semibold">{habits.length}</span> {habits.length === 1 ? 'habit' : 'habits'}
                     </span>
                   </div>
                   <div className="grid gap-3 transition-all duration-300">
-                    {visibleHabits.map((h) => (
+                    {habits.map((h) => (
                       <HabitCard
                         key={h._id}
                         habit={h}
