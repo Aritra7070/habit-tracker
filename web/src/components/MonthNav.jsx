@@ -5,6 +5,8 @@ export default function MonthNav({ year, month, onChange }) {
   const currentYear = now.getUTCFullYear();
   const currentMonth = now.getUTCMonth();
   const isCurrentMonth = year === currentYear && month === currentMonth;
+  const isFutureMonth = year > currentYear || (year === currentYear && month > currentMonth);
+  const isAtOrAfterCurrentMonth = isCurrentMonth || isFutureMonth;
 
   function goBack() {
     if (month === 0) {
@@ -16,7 +18,7 @@ export default function MonthNav({ year, month, onChange }) {
   }
 
   function goForward() {
-    if (isCurrentMonth) {
+    if (isAtOrAfterCurrentMonth) {
       return;
     }
 
@@ -33,11 +35,11 @@ export default function MonthNav({ year, month, onChange }) {
   }
 
   return (
-    <div className="mb-4 flex items-center justify-between">
+    <div className="flex items-center justify-between">
       <button
         type="button"
         onClick={goBack}
-        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700"
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700"
         aria-label="Previous month"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -49,7 +51,7 @@ export default function MonthNav({ year, month, onChange }) {
         <span className="text-[14px] font-semibold text-surface-800">
           {getMonthLabel(year, month)}
         </span>
-        {!isCurrentMonth && (
+        {!isAtOrAfterCurrentMonth && (
           <button
             type="button"
             onClick={goToday}
@@ -63,8 +65,8 @@ export default function MonthNav({ year, month, onChange }) {
       <button
         type="button"
         onClick={goForward}
-        disabled={isCurrentMonth}
-        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700 disabled:cursor-not-allowed disabled:opacity-30"
+        disabled={isAtOrAfterCurrentMonth}
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-30"
         aria-label="Next month"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

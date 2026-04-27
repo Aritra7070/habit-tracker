@@ -16,10 +16,23 @@ function getMonthDate(year, month, day) {
   return new Date(Date.UTC(year, month, day));
 }
 
+function getMonthEndKey(year, month) {
+  return formatDateKey(getMonthDate(year, month + 1, 0));
+}
+
+function getHabitStartKey(habit) {
+  if (!habit.createdAt) return null;
+  const createdAt = new Date(habit.createdAt);
+
+  if (Number.isNaN(createdAt.getTime())) return null;
+  return formatDateKey(createdAt);
+}
+
 export function buildCalendarMonth(year, month, habit) {
   const todayStr = formatDateKey(new Date());
   const completionSet = new Set(habit.completions ?? []);
   const schedule = habit.schedule ?? [];
+  const habitStartKey = getHabitStartKey(habit);
   const firstDay = getMonthDate(year, month, 1);
   const startPad = firstDay.getUTCDay();
   const daysInMonth = getMonthDate(year, month + 1, 0).getUTCDate();
@@ -38,9 +51,10 @@ export function buildCalendarMonth(year, month, habit) {
       dateStr,
       day,
       isCompleted: completionSet.has(dateStr),
-      isScheduled: schedule.includes(dayName),
+      isScheduled: schedule.includes(dayName) && (!habitStartKey || dateStr >= habitStartKey),
       isToday: dateStr === todayStr,
       isFuture: dateStr > todayStr,
+      isBeforeHabitStart: Boolean(habitStartKey && dateStr < habitStartKey),
       isCurrentMonth: true,
     });
   }
@@ -50,6 +64,11 @@ export function buildCalendarMonth(year, month, habit) {
   }
 
   return cells;
+}
+
+export function habitExistsInMonth(year, month, habit) {
+  const habitStartKey = getHabitStartKey(habit);
+  return !habitStartKey || habitStartKey <= getMonthEndKey(year, month);
 }
 
 export function getMonthLabel(year, month) {
