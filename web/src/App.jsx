@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import Habits from "./pages/Habits";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import Calendar from "./pages/Calendar";
 
 function App() {
   return (
@@ -23,8 +24,9 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/habits" element={<Habits />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/settings" element={<PlaceholderPage title="User Settings" />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/settings" element={<PlaceholderPage title="User Settings" />} />
         </Route>
       </Route>
 

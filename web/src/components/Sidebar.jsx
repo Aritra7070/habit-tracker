@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { to: "/habits", label: "Habits", icon: HabitsIcon },
+  { to: "/calendar", label: "Calendar", icon: CalendarIcon },
   { to: "/analytics", label: "Analytics", icon: AnalyticsIcon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
@@ -57,6 +58,14 @@ function HabitsIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75a2.25 2.25 0 0 1-2.25-2.25V6.75Z" />
     </svg>
   );
 }
