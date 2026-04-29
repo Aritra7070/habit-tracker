@@ -19,14 +19,18 @@ function getInitials(name) {
 export default function SettingsPage() {
   const { token, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [profile, setProfile] = useState({ name: "", email: "" });
+  const [nameDraft, setNameDraft] = useState("");
+  const [profileModalError, setProfileModalError] = useState("");
   const [settings, setSettings] = useState({
     emailNotifications: true,
     offMode: EMPTY_OFF_MODE,
   });
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempOffMode, setTempOffMode] = useState(EMPTY_OFF_MODE);
 
@@ -46,6 +50,7 @@ export default function SettingsPage() {
           name: data.user.name || "",
           email: data.user.email || "",
         });
+        setNameDraft(data.user.name || "");
         setSettings({
           emailNotifications: data.settings.emailNotifications,
           offMode: data.settings.offMode || EMPTY_OFF_MODE,
@@ -89,6 +94,7 @@ export default function SettingsPage() {
         name: data.user.name || "",
         email: data.user.email || "",
       });
+      setNameDraft(data.user.name || "");
       setSettings({
         emailNotifications: data.settings.emailNotifications,
         offMode: data.settings.offMode || EMPTY_OFF_MODE,
@@ -102,6 +108,39 @@ export default function SettingsPage() {
     } finally {
       savingSetter(false);
     }
+  }
+
+  function handleStartNameEdit() {
+    setNameDraft(profile.name);
+    setProfileModalError("");
+    setIsProfileModalOpen(true);
+    setError("");
+    setSuccessMessage("");
+  }
+
+  function handleCancelNameEdit() {
+    setNameDraft(profile.name);
+    setProfileModalError("");
+    setIsProfileModalOpen(false);
+  }
+
+  async function handleNameSubmit(event) {
+    event.preventDefault();
+
+    const trimmedName = nameDraft.trim();
+    if (!trimmedName) {
+      setProfileModalError("Name is required");
+      return;
+    }
+
+    setProfileModalError("");
+    await saveSettings(
+      { ...profile, name: trimmedName },
+      settings,
+      setIsSavingProfile
+    )
+      .then(() => setIsProfileModalOpen(false))
+      .catch((err) => setProfileModalError(err.message));
   }
 
   async function handleEmailNotificationsChange(event) {
@@ -167,7 +206,20 @@ export default function SettingsPage() {
       )}
 
       <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-surface-800">User Profile</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-surface-800">User Profile</h2>
+          <button
+            type="button"
+            onClick={handleStartNameEdit}
+            className="cursor-pointer rounded-lg p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-surface-600"
+            aria-label="Edit profile"
+            title="Edit profile"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+            </svg>
+          </button>
+        </div>
         <div className="mt-5 flex items-center gap-5">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xl font-bold text-accent-600">
             {getInitials(profile.name)}
@@ -316,6 +368,78 @@ export default function SettingsPage() {
                 {isSavingPreferences ? "Saving..." : "Save Timeline"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
+          <div className="mx-4 w-full max-w-md rounded-2xl border border-surface-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between px-6 pb-4 pt-6">
+              <h2 className="text-[16px] font-semibold text-surface-800">
+                Edit Profile
+              </h2>
+              <button
+                type="button"
+                onClick={handleCancelNameEdit}
+                className="cursor-pointer rounded-lg p-1.5 text-surface-400 transition-colors hover:bg-surface-100 hover:text-surface-600"
+                aria-label="Close"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleNameSubmit} className="space-y-4 px-6 pb-6">
+              <InlineError message={profileModalError} />
+
+              <div>
+                <label htmlFor="profile-name" className="mb-1.5 block text-[13px] font-medium text-surface-600">
+                  Full name
+                </label>
+                <input
+                  id="profile-name"
+                  type="text"
+                  value={nameDraft}
+                  onChange={(event) => setNameDraft(event.target.value)}
+                  className="w-full rounded-xl border border-surface-200 px-3.5 py-2.5 text-[13px] text-surface-800 outline-none transition-all focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label htmlFor="profile-email" className="mb-1.5 block text-[13px] font-medium text-surface-600">
+                  Email
+                </label>
+                <input
+                  id="profile-email"
+                  type="email"
+                  value={profile.email}
+                  readOnly
+                  className="w-full cursor-not-allowed rounded-xl border border-surface-200 bg-surface-50 px-3.5 py-2.5 text-[13px] text-surface-500 outline-none"
+                  title="Email cannot be changed here"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCancelNameEdit}
+                  disabled={isSavingProfile}
+                  className="cursor-pointer rounded-xl border border-surface-200 px-4 py-2 text-[13px] text-surface-600 transition-all hover:bg-surface-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="cursor-pointer rounded-xl bg-accent-500 px-5 py-2 text-[13px] font-medium text-white shadow-sm shadow-accent-200 transition-all hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSavingProfile ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
