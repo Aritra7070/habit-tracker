@@ -19,7 +19,6 @@ function getInitials(name) {
 export default function SettingsPage() {
   const { token, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -105,11 +104,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleProfileSubmit(event) {
-    event.preventDefault();
-    await saveSettings(profile, settings, setIsSavingProfile).catch(() => {});
-  }
-
   async function handleEmailNotificationsChange(event) {
     const nextSettings = {
       ...settings,
@@ -172,55 +166,22 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <form
-        onSubmit={handleProfileSubmit}
-        className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm"
-      >
+      <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-surface-800">User Profile</h2>
-        <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
+        <div className="mt-5 flex items-center gap-5">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xl font-bold text-accent-600">
             {getInitials(profile.name)}
           </div>
-          <div className="grid flex-1 gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-surface-400">
-                Name
-              </span>
-              <input
-                value={profile.name}
-                onChange={(event) =>
-                  setProfile((current) => ({ ...current, name: event.target.value }))
-                }
-                className="mt-1 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-surface-800 outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
-                required
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-surface-400">
-                Email
-              </span>
-              <input
-                type="email"
-                value={profile.email}
-                onChange={(event) =>
-                  setProfile((current) => ({ ...current, email: event.target.value }))
-                }
-                className="mt-1 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-surface-800 outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
-                required
-              />
-            </label>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-surface-900">
+              {profile.name || "User"}
+            </p>
+            <p className="mt-1 truncate text-sm text-surface-500">
+              {profile.email}
+            </p>
           </div>
         </div>
-        <div className="mt-5 flex justify-end">
-          <button
-            type="submit"
-            disabled={isSavingProfile}
-            className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingProfile ? "Saving..." : "Save Profile"}
-          </button>
-        </div>
-      </form>
+      </section>
 
       <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-surface-800">App Preferences</h2>
