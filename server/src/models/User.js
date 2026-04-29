@@ -21,6 +21,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    settings: {
+      emailNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      offMode: {
+        start: {
+          type: String,
+          default: "",
+        },
+        end: {
+          type: String,
+          default: "",
+        },
+      },
+    },
   },
   { timestamps: true }
 );
