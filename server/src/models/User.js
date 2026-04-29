@@ -26,6 +26,17 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+      reminderDefaults: {
+        times: {
+          type: [String],
+          default: [],
+        },
+        notificationType: {
+          type: String,
+          enum: ["email", "push", "both"],
+          default: "push",
+        },
+      },
       offMode: {
         start: {
           type: String,
@@ -34,6 +45,33 @@ const userSchema = new mongoose.Schema(
         end: {
           type: String,
           default: "",
+        },
+        vacationMode: {
+          type: Boolean,
+          default: false,
+        },
+        autoPauseStreaks: {
+          type: Boolean,
+          default: true,
+        },
+        offDays: {
+          type: [String],
+          default: [],
+        },
+      },
+      locale: {
+        timeZone: {
+          type: String,
+          default: "UTC",
+        },
+        timeFormat: {
+          type: String,
+          enum: ["12h", "24h"],
+          default: "12h",
+        },
+        language: {
+          type: String,
+          default: "en",
         },
       },
     },

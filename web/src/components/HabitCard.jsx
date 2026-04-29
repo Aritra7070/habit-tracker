@@ -74,6 +74,14 @@ function formatReminderTime(time) {
   return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
 }
 
+function getReminderTimes(habit) {
+  return habit.reminderTimes?.length
+    ? habit.reminderTimes
+    : habit.reminderTime
+      ? [habit.reminderTime]
+      : [];
+}
+
 export default function HabitCard({ habit, onToggleToday, onEdit, onDelete }) {
   const today = new Date();
   const schedule = habit.schedule || [];
@@ -91,6 +99,7 @@ export default function HabitCard({ habit, onToggleToday, onEdit, onDelete }) {
     ? Math.min(1, Math.round((weekCompletions.length / schedule.length) * 100) / 100)
     : 0;
   const streak = calculateStreak(completions, today);
+  const reminderTimes = getReminderTimes(habit);
 
   return (
     <div className="group rounded-2xl border border-surface-200 bg-white p-5 transition-shadow duration-200 hover:shadow-md hover:shadow-surface-200/60">
@@ -101,12 +110,14 @@ export default function HabitCard({ habit, onToggleToday, onEdit, onDelete }) {
           </h3>
           <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             {habit.goal && <p className="truncate text-[12px] text-surface-400">{habit.goal}</p>}
-            {habit.hasReminder && habit.reminderTime && (
+            {habit.hasReminder && reminderTimes.length > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2 py-0.5 text-[11px] font-medium text-accent-600">
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                {formatReminderTime(habit.reminderTime)}
+                {reminderTimes.slice(0, 2).map(formatReminderTime).join(", ")}
+                {reminderTimes.length > 2 ? ` +${reminderTimes.length - 2}` : ""}
+                <span className="capitalize">({habit.notificationType || "push"})</span>
               </span>
             )}
           </div>

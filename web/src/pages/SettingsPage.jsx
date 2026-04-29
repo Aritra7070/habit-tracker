@@ -4,6 +4,56 @@ import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../utils/api";
 
 const EMPTY_OFF_MODE = { start: "", end: "" };
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const TIME_ZONES = ["UTC", "Asia/Calcutta", "America/New_York", "Europe/London", "Asia/Tokyo"];
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "Hindi" },
+  { value: "es", label: "Spanish" },
+];
+const DEFAULT_SETTINGS = {
+  emailNotifications: true,
+  reminderDefaults: {
+    times: [],
+    notificationType: "push",
+  },
+  offMode: {
+    ...EMPTY_OFF_MODE,
+    vacationMode: false,
+    autoPauseStreaks: true,
+    offDays: [],
+  },
+  locale: {
+    timeZone: "UTC",
+    timeFormat: "12h",
+    language: "en",
+  },
+};
+
+function mergeSettings(settings = {}) {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...settings,
+    reminderDefaults: {
+      ...DEFAULT_SETTINGS.reminderDefaults,
+      ...(settings.reminderDefaults || {}),
+    },
+    offMode: {
+      ...DEFAULT_SETTINGS.offMode,
+      ...(settings.offMode || {}),
+    },
+    locale: {
+      ...DEFAULT_SETTINGS.locale,
+      ...(settings.locale || {}),
+    },
+  };
+}
+
+function toggleListValue(list, value) {
+  return list.includes(value)
+    ? list.filter((item) => item !== value)
+    : [...list, value];
+}
 
 function getInitials(name) {
   return name
@@ -26,13 +76,11 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [nameDraft, setNameDraft] = useState("");
   const [profileModalError, setProfileModalError] = useState("");
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    offMode: EMPTY_OFF_MODE,
-  });
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempOffMode, setTempOffMode] = useState(EMPTY_OFF_MODE);
+  const [tempOffMode, setTempOffMode] = useState(DEFAULT_SETTINGS.offMode);
+  const [newReminderTime, setNewReminderTime] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -51,10 +99,7 @@ export default function SettingsPage() {
           email: data.user.email || "",
         });
         setNameDraft(data.user.name || "");
-        setSettings({
-          emailNotifications: data.settings.emailNotifications,
-          offMode: data.settings.offMode || EMPTY_OFF_MODE,
-        });
+        setSettings(mergeSettings(data.settings));
         updateUser(data.user);
       } catch (err) {
         if (isMounted) {
@@ -95,10 +140,7 @@ export default function SettingsPage() {
         email: data.user.email || "",
       });
       setNameDraft(data.user.name || "");
-      setSettings({
-        emailNotifications: data.settings.emailNotifications,
-        offMode: data.settings.offMode || EMPTY_OFF_MODE,
-      });
+      setSettings(mergeSettings(data.settings));
       updateUser(data.user);
       setSuccessMessage("Settings saved.");
       return data;
@@ -107,6 +149,17 @@ export default function SettingsPage() {
       throw err;
     } finally {
       savingSetter(false);
+    }
+  }
+
+  async function persistSettings(nextSettings) {
+    const previousSettings = settings;
+    setSettings(nextSettings);
+
+    try {
+      await saveSettings(profile, nextSettings, setIsSavingPreferences);
+    } catch {
+      setSettings(previousSettings);
     }
   }
 
@@ -149,14 +202,75 @@ export default function SettingsPage() {
       emailNotifications: event.target.checked,
     };
 
-    setSettings(nextSettings);
-    await saveSettings(profile, nextSettings, setIsSavingPreferences).catch(() => {
-      setSettings(settings);
+    await persistSettings(nextSettings);
+  }
+
+  async function handleReminderTypeChange(notificationType) {
+    await persistSettings({
+      ...settings,
+      reminderDefaults: {
+        ...settings.reminderDefaults,
+        notificationType,
+      },
+    });
+  }
+
+  async function handleAddReminderDefault() {
+    if (!newReminderTime) return;
+
+    const times = [...new Set([...settings.reminderDefaults.times, newReminderTime])].sort();
+    setNewReminderTime("");
+    await persistSettings({
+      ...settings,
+      reminderDefaults: {
+        ...settings.reminderDefaults,
+        times,
+      },
+    });
+  }
+
+  async function handleRemoveReminderDefault(time) {
+    await persistSettings({
+      ...settings,
+      reminderDefaults: {
+        ...settings.reminderDefaults,
+        times: settings.reminderDefaults.times.filter((item) => item !== time),
+      },
+    });
+  }
+
+  async function handleOffModeField(field, value) {
+    await persistSettings({
+      ...settings,
+      offMode: {
+        ...settings.offMode,
+        [field]: value,
+      },
+    });
+  }
+
+  async function handleOffDayToggle(day) {
+    await persistSettings({
+      ...settings,
+      offMode: {
+        ...settings.offMode,
+        offDays: toggleListValue(settings.offMode.offDays, day),
+      },
+    });
+  }
+
+  async function handleLocaleField(field, value) {
+    await persistSettings({
+      ...settings,
+      locale: {
+        ...settings.locale,
+        [field]: value,
+      },
     });
   }
 
   function openOffModeModal() {
-    setTempOffMode(settings.offMode?.start ? settings.offMode : EMPTY_OFF_MODE);
+    setTempOffMode(settings.offMode || DEFAULT_SETTINGS.offMode);
     setIsModalOpen(true);
   }
 
@@ -173,7 +287,14 @@ export default function SettingsPage() {
   }
 
   async function handleClearOffMode() {
-    const nextSettings = { ...settings, offMode: EMPTY_OFF_MODE };
+    const nextSettings = {
+      ...settings,
+      offMode: {
+        ...settings.offMode,
+        start: "",
+        end: "",
+      },
+    };
     await saveSettings(profile, nextSettings, setIsSavingPreferences)
       .then(() => setIsModalOpen(false))
       .catch(() => {});
@@ -236,19 +357,79 @@ export default function SettingsPage() {
       </section>
 
       <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-surface-800">App Preferences</h2>
+        <h2 className="text-lg font-semibold text-surface-800">Reminder Settings</h2>
         <div className="mt-4 divide-y divide-surface-100">
-          <div className="flex items-center justify-between py-3">
+          <div className="py-3">
             <div>
-              <p className="font-medium text-surface-800">Dark Mode</p>
-              <p className="text-sm text-surface-400">Coming soon</p>
+              <p className="font-medium text-surface-800">Default Reminder Times</p>
+              <p className="text-sm text-surface-400">New habits can start with these reminder times.</p>
             </div>
-            <span className="text-sm text-surface-400">Unavailable</span>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {settings.reminderDefaults.times.length > 0 ? (
+                settings.reminderDefaults.times.map((time) => (
+                  <span
+                    key={time}
+                    className="inline-flex items-center gap-2 rounded-full bg-accent-50 px-3 py-1 text-[12px] font-medium text-accent-600"
+                  >
+                    {time}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveReminderDefault(time)}
+                      className="cursor-pointer text-accent-400 hover:text-danger-500"
+                      aria-label={`Remove ${time}`}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-surface-400">No default times set</span>
+              )}
+            </div>
+            <div className="mt-3 flex max-w-xs gap-2">
+              <input
+                type="time"
+                value={newReminderTime}
+                onChange={(event) => setNewReminderTime(event.target.value)}
+                className="min-w-0 flex-1 rounded-lg border border-surface-200 px-3 py-2 text-sm outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
+              />
+              <button
+                type="button"
+                onClick={handleAddReminderDefault}
+                disabled={!newReminderTime || isSavingPreferences}
+                className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-surface-800">Notification Type</p>
+              <p className="text-sm text-surface-400">Choose the default delivery style.</p>
+            </div>
+            <div className="grid w-full grid-cols-3 gap-1.5 sm:w-64">
+              {["email", "push", "both"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleReminderTypeChange(type)}
+                  disabled={isSavingPreferences}
+                  className={`rounded-lg px-3 py-2 text-[12px] font-medium capitalize transition ${
+                    settings.reminderDefaults.notificationType === type
+                      ? "bg-accent-500 text-white"
+                      : "border border-surface-200 text-surface-500 hover:bg-surface-50"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center justify-between py-3">
             <div>
               <p className="font-medium text-surface-800">Email Notifications</p>
-              <p className="text-sm text-surface-400">Save reminder email preference.</p>
+              <p className="text-sm text-surface-400">Allow email as a reminder channel.</p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
               <input
@@ -267,26 +448,130 @@ export default function SettingsPage() {
 
       <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-surface-800">Mood & Focus</h2>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-semibold text-surface-900">Off Mode</p>
-            {hasOffMode ? (
-              <p className="mt-1 text-sm font-medium text-accent-600">
-                Active: {settings.offMode.start} to {settings.offMode.end}
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-surface-500">
-                Pause streaks and hide habits while you rest.
-              </p>
-            )}
+        <div className="mt-4 divide-y divide-surface-100">
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="font-medium text-surface-800">Vacation Mode</p>
+              <p className="text-sm text-surface-400">Pause all habits while you are away.</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={settings.offMode.vacationMode}
+                onChange={(event) => handleOffModeField("vacationMode", event.target.checked)}
+                disabled={isSavingPreferences}
+                className="peer sr-only"
+              />
+              <span className="h-6 w-11 rounded-full bg-surface-200 transition peer-checked:bg-accent-500 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-100" />
+              <span className="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+            </label>
           </div>
-          <button
-            type="button"
-            onClick={openOffModeModal}
-            className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-2 text-sm font-semibold text-surface-700 transition hover:bg-surface-100"
-          >
-            {hasOffMode ? "Edit Days" : "Set Off Days"}
-          </button>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="font-medium text-surface-800">Auto-pause Streaks</p>
+              <p className="text-sm text-surface-400">Keep streaks safe on planned off days.</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={settings.offMode.autoPauseStreaks}
+                onChange={(event) => handleOffModeField("autoPauseStreaks", event.target.checked)}
+                disabled={isSavingPreferences}
+                className="peer sr-only"
+              />
+              <span className="h-6 w-11 rounded-full bg-surface-200 transition peer-checked:bg-accent-500 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-100" />
+              <span className="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+            </label>
+          </div>
+          <div className="py-3">
+            <p className="font-medium text-surface-800">Scheduled Off Days</p>
+            <p className="text-sm text-surface-400">Pick recurring days to rest.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {WEEKDAYS.map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleOffDayToggle(day)}
+                  disabled={isSavingPreferences}
+                  className={`rounded-lg px-3 py-2 text-[12px] font-medium transition ${
+                    settings.offMode.offDays.includes(day)
+                      ? "bg-accent-500 text-white"
+                      : "border border-surface-200 text-surface-500 hover:bg-surface-50"
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-surface-900">Off Mode Timeline</p>
+              {hasOffMode ? (
+                <p className="mt-1 text-sm font-medium text-accent-600">
+                  Active: {settings.offMode.start} to {settings.offMode.end}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-surface-500">
+                  Pause streaks and hide habits while you rest.
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={openOffModeModal}
+              className="rounded-lg border border-surface-200 bg-surface-50 px-4 py-2 text-sm font-semibold text-surface-700 transition hover:bg-surface-100"
+            >
+              {hasOffMode ? "Edit Days" : "Set Off Days"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-surface-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-surface-800">Localization & Time</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-surface-400">
+              Time Zone
+            </span>
+            <select
+              value={settings.locale.timeZone}
+              onChange={(event) => handleLocaleField("timeZone", event.target.value)}
+              className="mt-1 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
+            >
+              {TIME_ZONES.map((zone) => (
+                <option key={zone} value={zone}>{zone}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-surface-400">
+              Time Format
+            </span>
+            <select
+              value={settings.locale.timeFormat}
+              onChange={(event) => handleLocaleField("timeFormat", event.target.value)}
+              className="mt-1 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
+            >
+              <option value="12h">12-hour</option>
+              <option value="24h">24-hour</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-surface-400">
+              Language
+            </span>
+            <select
+              value={settings.locale.language}
+              onChange={(event) => handleLocaleField("language", event.target.value)}
+              className="mt-1 w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
+            >
+              {LANGUAGES.map((language) => (
+                <option key={language.value} value={language.value}>{language.label}</option>
+              ))}
+            </select>
+          </label>
         </div>
       </section>
 

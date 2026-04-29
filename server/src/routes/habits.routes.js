@@ -3,21 +3,48 @@ import Habit from "../models/Habit.js";
 import { validateFilterSort, filterAndSort } from "../utils/filterSort.js";
 
 const router = Router();
+const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const VALID_NOTIFICATION_TYPES = ["email", "push", "both"];
 
-function normalizeReminderFields({ hasReminder, reminderTime }) {
+function normalizeReminderFields({ hasReminder, reminderTime, reminderTimes, notificationType }) {
   const reminderEnabled = Boolean(hasReminder);
 
   if (!reminderEnabled) {
-    return { hasReminder: false, reminderTime: "" };
-  }
-
-  if (!reminderTime || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(reminderTime)) {
     return {
-      error: "Reminder time is required and must use HH:MM format",
+      hasReminder: false,
+      reminderTime: "",
+      reminderTimes: [],
+      notificationType: notificationType || "push",
     };
   }
 
-  return { hasReminder: true, reminderTime };
+  const times = Array.isArray(reminderTimes)
+    ? reminderTimes
+    : reminderTime
+      ? [reminderTime]
+      : [];
+  const normalizedTimes = [...new Set(times.filter(Boolean))].sort();
+
+  if (
+    normalizedTimes.length === 0 ||
+    normalizedTimes.some((time) => !TIME_REGEX.test(time))
+  ) {
+    return {
+      error: "At least one reminder time is required and each time must use HH:MM format",
+    };
+  }
+
+  const nextNotificationType = notificationType || "push";
+  if (!VALID_NOTIFICATION_TYPES.includes(nextNotificationType)) {
+    return { error: "Invalid notification type" };
+  }
+
+  return {
+    hasReminder: true,
+    reminderTime: normalizedTimes[0],
+    reminderTimes: normalizedTimes,
+    notificationType: nextNotificationType,
+  };
 }
 
 // GET /api/habits - list all habits for the authenticated user
@@ -53,7 +80,6 @@ router.get("/reminders", async (req, res) => {
     const habits = await Habit.find({
       userId: req.userId,
       hasReminder: true,
-      reminderTime: { $ne: "" },
     });
 
     if (req.query.scope === "all") {
@@ -82,6 +108,8 @@ router.post("/", async (req, res) => {
       goal,
       hasReminder,
       reminderTime,
+      reminderTimes,
+      notificationType,
       reminderTimezone,
     } = req.body;
 
@@ -89,7 +117,12 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
-    const reminderFields = normalizeReminderFields({ hasReminder, reminderTime });
+    const reminderFields = normalizeReminderFields({
+      hasReminder,
+      reminderTime,
+      reminderTimes,
+      notificationType,
+    });
     if (reminderFields.error) {
       return res.status(400).json({ error: reminderFields.error });
     }
@@ -123,6 +156,8 @@ router.put("/:id", async (req, res) => {
       goal,
       hasReminder,
       reminderTime,
+      reminderTimes,
+      notificationType,
       reminderTimezone,
     } = req.body;
 
@@ -144,6 +179,18 @@ router.put("/:id", async (req, res) => {
         hasReminder !== undefined ? hasReminder : existingHabit.hasReminder,
       reminderTime:
         reminderTime !== undefined ? reminderTime : existingHabit.reminderTime,
+      reminderTimes:
+        reminderTimes !== undefined
+          ? reminderTimes
+          : existingHabit.reminderTimes?.length
+            ? existingHabit.reminderTimes
+            : existingHabit.reminderTime
+              ? [existingHabit.reminderTime]
+              : [],
+      notificationType:
+        notificationType !== undefined
+          ? notificationType
+          : existingHabit.notificationType || "push",
     };
     const reminderFields = normalizeReminderFields(nextReminderState);
 
@@ -160,6 +207,8 @@ router.put("/:id", async (req, res) => {
     }
     updates.hasReminder = reminderFields.hasReminder;
     updates.reminderTime = reminderFields.reminderTime;
+    updates.reminderTimes = reminderFields.reminderTimes;
+    updates.notificationType = reminderFields.notificationType;
 
     const habit = await Habit.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
