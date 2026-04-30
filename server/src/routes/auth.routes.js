@@ -86,4 +86,76 @@ router.post("/signin", async (req, res) => {
   }
 });
 
+// POST /api/auth/google-signin
+router.post("/google-signin", async (req, res) => {
+  try {
+    const { googleToken } = req.body;
+    console.log("[Google Auth] Received google token, verifying...");
+
+    if (!googleToken) {
+      console.error("[Google Auth] No token provided");
+      return res.status(400).json({ error: "Google token is required" });
+    }
+
+    // Use the access token to get user info from Google
+    const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: {
+        Authorization: `Bearer ${googleToken}`,
+      },
+    });
+
+    if (!userInfoResponse.ok) {
+      const errorData = await userInfoResponse.json();
+      console.error("[Google Auth] Failed to get user info:", errorData);
+      return res.status(401).json({ error: "Invalid Google token" });
+    }
+
+    const googleUser = await userInfoResponse.json();
+    console.log("[Google Auth] Retrieved user info:", { email: googleUser.email, name: googleUser.name });
+    const { email, name, picture, id: googleId } = googleUser;
+
+    if (!email) {
+      console.error("[Google Auth] No email in Google user data");
+      return res.status(400).json({ error: "Unable to retrieve email from Google" });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      console.log("[Google Auth] Creating new user:", email);
+      // Create a new user with Google info
+      user = await User.create({
+        name: name || "Google User",
+        email: email.toLowerCase(),
+        googleId: googleId,
+        // Generate a random password for Google users (they won't use it)
+        password: Math.random().toString(36).substring(2, 15),
+        picture: picture,
+      });
+    } else {
+      console.log("[Google Auth] Found existing user:", email);
+      if (!user.googleId) {
+        // Link Google account to existing user
+        user.googleId = googleId;
+        if (picture && !user.picture) {
+          user.picture = picture;
+        }
+        await user.save();
+      }
+    }
+
+    const token = signToken(user._id);
+    console.log("[Google Auth] Authentication successful for:", user.email);
+
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (err) {
+    console.error("[Google Auth] Error:", err.message);
+    res.status(401).json({ error: "Google authentication failed" });
+  }
+});
+
 export default router;

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { apiRequest } from "../utils/api";
 
 const AuthContext = createContext(null);
@@ -89,6 +89,16 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  async function googleSignIn(googleToken) {
+    const data = await apiRequest("/api/auth/google-signin", {
+      method: "POST",
+      body: JSON.stringify({ googleToken }),
+    });
+
+    saveSession(data.token, data.user);
+    return data;
+  }
+
   function signout() {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -99,7 +109,7 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
-  const value = { user, token, isLoading, signup, signin, signout, updateUser };
+  const value = { user, token, isLoading, signup, signin, googleSignIn, signout, updateUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
