@@ -310,6 +310,33 @@ export default function SettingsPage() {
     );
   }
 
+  // 4. RESET PASSWORD HANDLER
+  const handleResetPassword = async () => {
+    setResetStatus('sending');
+    setResetMessage('');
+
+    try {
+      const data = await apiRequest('/api/auth/request-password-reset', {
+        method: 'POST',
+        token,
+      });
+      setResetStatus('sent');
+      setResetMessage(data.email
+        ? `Reset link sent to ${data.email}`
+        : 'Password reset link has been sent to your email.'
+      );
+
+      // Auto-dismiss after 8 seconds
+      setTimeout(() => {
+        setResetStatus(null);
+        setResetMessage('');
+      }, 8000);
+    } catch (err) {
+      setResetStatus('error');
+      setResetMessage(err.message || 'Failed to send reset link.');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[820px] space-y-5">
       <div>
@@ -575,6 +602,66 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* SECTION 4: ACCOUNT SECURITY */}
+      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: '24px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Account Security</h2>
+
+        {/* Reset password notification */}
+        {resetStatus === 'sent' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '12px 16px', marginBottom: '16px', borderRadius: '10px',
+            backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0',
+            animation: 'resetNotifSlideIn 0.3s ease-out'
+          }}>
+            <span style={{ fontSize: '18px' }}>✅</span>
+            <span style={{ color: '#166534', fontSize: '14px', fontWeight: '500' }}>{resetMessage}</span>
+          </div>
+        )}
+        {resetStatus === 'error' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '12px 16px', marginBottom: '16px', borderRadius: '10px',
+            backgroundColor: '#fef2f2', border: '1px solid #fecaca'
+          }}>
+            <span style={{ fontSize: '18px' }}>❌</span>
+            <span style={{ color: '#991b1b', fontSize: '14px', fontWeight: '500' }}>{resetMessage}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontWeight: '600', color: '#111827', margin: '0 0 4px 0' }}>🔒 Reset Password</p>
+            <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>We'll send a reset link to your registered email address.</p>
+          </div>
+          <button
+            onClick={handleResetPassword}
+            disabled={resetStatus === 'sending'}
+            style={{
+              padding: '8px 20px',
+              backgroundColor: resetStatus === 'sending' ? '#d1d5db' : '#7c5cff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: resetStatus === 'sending' ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'white',
+              transition: 'background-color 0.2s ease'
+            }}
+          >
+            {resetStatus === 'sending' ? 'Sending…' : 'Reset Password'}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes resetNotifSlideIn {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* MODAL: SET OFF DAYS */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/70 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
@@ -730,4 +817,6 @@ export default function SettingsPage() {
       )}
     </div>
   );
-}
+};
+
+export default SettingsPage;

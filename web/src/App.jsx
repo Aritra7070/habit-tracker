@@ -5,6 +5,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/AppLayout";
 import SigninPage from "./pages/SigninPage";
 import SignupPage from "./pages/SignupPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import Habits from "./pages/Habits";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -19,7 +21,11 @@ function App() {
         <Route element={<GuestRoute />}>
           <Route path="/signin" element={<SigninPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
+
+        {/* Password reset — accessible regardless of login state */}
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
         {/* Protected routes — rendered inside AppLayout (sidebar + topnav) */}
         <Route element={<ProtectedRoute />}>
