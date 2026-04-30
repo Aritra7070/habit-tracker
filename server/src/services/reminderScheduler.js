@@ -2,6 +2,7 @@ import cron from "node-cron";
 import webpush from "web-push";
 import Habit from "../models/Habit.js";
 import PushSubscription from "../models/PushSubscription.js";
+import User from "../models/User.js";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -86,6 +87,18 @@ async function sendReminder(subscription, habit) {
   }
 }
 
+function isUserInFocusOffMode(user) {
+  if (!user.focusOffMode || !user.focusOffMode.enabled) {
+    return false;
+  }
+
+  const now = new Date();
+  const startDate = new Date(user.focusOffMode.startDate);
+  const endDate = new Date(user.focusOffMode.endDate);
+
+  return now >= startDate && now <= endDate;
+}
+
 async function sendDueReminders() {
   const habits = await Habit.find({
     hasReminder: true,
@@ -109,6 +122,12 @@ async function sendDueReminders() {
   });
 
   for (const habit of dueHabits) {
+    // Check if user is in focus off mode
+    const user = await User.findById(habit.userId);
+    if (user && isUserInFocusOffMode(user)) {
+      continue;
+    }
+
     const subscriptions = await PushSubscription.find({ userId: habit.userId });
 
     await Promise.all(

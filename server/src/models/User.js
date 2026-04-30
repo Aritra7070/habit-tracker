@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    focusOffMode: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      startDate: Date,
+      endDate: Date,
+    },
   },
   { timestamps: true }
 );
