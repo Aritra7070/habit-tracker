@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/api";
 
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
+const MIN_PASSWORD_LENGTH = 6;
+
 export default function ResetPasswordPage() {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -40,8 +43,13 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      return;
+    }
+
+    if (!SPECIAL_CHAR_REGEX.test(password)) {
+      setError("Password must contain at least one special character");
       return;
     }
 
@@ -204,7 +212,7 @@ export default function ResetPasswordPage() {
           </div>
           <h1 className="text-3xl font-bold text-surface-900">Set new password</h1>
           <p className="mt-2 text-surface-500">
-            Your new password must be at least 6 characters
+            Min 6 chars, one special character
           </p>
         </div>
 
@@ -229,7 +237,7 @@ export default function ResetPasswordPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Min 6 chars, one special character"
                 autoComplete="new-password"
                 autoFocus
                 className="w-full rounded-lg border border-surface-200 bg-white px-4 py-2.5 text-surface-900 placeholder-surface-400 outline-none transition-colors focus:border-accent-400 focus:ring-2 focus:ring-accent-100"
@@ -277,7 +285,7 @@ export default function ResetPasswordPage() {
                     style={{
                       backgroundColor:
                         password.length >= 10 &&
-                        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)
+                        SPECIAL_CHAR_REGEX.test(password)
                           ? "#22c55e"
                           : "#e4e4ec",
                     }}
