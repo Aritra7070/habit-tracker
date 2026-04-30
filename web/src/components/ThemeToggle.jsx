@@ -82,32 +82,31 @@ const toggleStyles = `
     transform: scale(1) rotate(0deg);
   }
 
-  .theme-toggle-tick-ring {
-    position: absolute;
-    top: 3px;
-    left: 0;
-    width: 26px;
-    height: 26px;
-    pointer-events: none;
-    transition:
-      transform 0.42s cubic-bezier(0.34, 1.48, 0.64, 1),
-      opacity 0.3s ease;
-  }
-
-  .theme-toggle-tick-ring.light {
-    transform: translateX(4px);
-    opacity: 1;
-  }
-  .theme-toggle-tick-ring.dark {
-    transform: translateX(32px);
-    opacity: 0;
-  }
 `;
 
 function Sun() {
+  const count = 8;
+  const cx = 8, cy = 8;
+  const r1 = 4.5, r2 = 6.5;
+
   return (
-    <svg className="theme-toggle-icon theme-toggle-icon-sun" width="12" height="12" viewBox="0 0 16 16">
-      <circle cx="8" cy="8" r="4" fill="#1e1e1e" />
+    <svg className="theme-toggle-icon theme-toggle-icon-sun" width="16" height="16" viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r="2.5" fill="#2d3748" />
+      {Array.from({ length: count }).map((_, i) => {
+        const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
+        return (
+          <line
+            key={i}
+            x1={cx + r1 * Math.cos(angle)}
+            y1={cy + r1 * Math.sin(angle)}
+            x2={cx + r2 * Math.cos(angle)}
+            y2={cy + r2 * Math.sin(angle)}
+            stroke="#2d3748"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        );
+      })}
     </svg>
   );
 }
@@ -120,31 +119,7 @@ function Moon() {
   );
 }
 
-function TickRing({ mode }) {
-  const count = 8;
-  const cx = 13, cy = 13;
-  const r1 = 10, r2 = 12;
 
-  return (
-    <svg className={`theme-toggle-tick-ring ${mode}`} viewBox="0 0 26 26">
-      {Array.from({ length: count }).map((_, i) => {
-        const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-        return (
-          <line
-            key={i}
-            x1={cx + r1 * Math.cos(angle)}
-            y1={cy + r1 * Math.sin(angle)}
-            x2={cx + r2 * Math.cos(angle)}
-            y2={cy + r2 * Math.sin(angle)}
-            stroke="#555"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        );
-      })}
-    </svg>
-  );
-}
 
 export default function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme();
@@ -160,7 +135,6 @@ export default function ThemeToggle() {
         aria-checked={isDark}
         aria-label="Toggle light/dark mode"
       >
-        <TickRing mode={mode} />
         <div className={`theme-toggle-thumb ${mode}`}>
           <Sun />
           <Moon />
