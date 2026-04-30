@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "./ThemeToggle";
 
 export default function TopNav() {
   const { user, signout } = useAuth();
@@ -11,9 +12,7 @@ export default function TopNav() {
     <header className="fixed top-0 left-[220px] right-0 h-14 bg-white/80 backdrop-blur-md border-b border-surface-200 flex items-center justify-between px-6 z-10">
       <div />
       <div className="flex items-center gap-3">
-        {user?.email && (
-          <span className="text-[12px] text-surface-400 hidden sm:block">{user.email}</span>
-        )}
+        <ThemeToggle />
         <div className="w-8 h-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-[12px] font-bold">
           {initials}
         </div>
