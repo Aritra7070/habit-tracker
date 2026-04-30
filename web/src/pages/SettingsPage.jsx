@@ -10,6 +10,7 @@ const SettingsPage = () => {
   const [tempEnd, setTempEnd] = useState("");
   const [resetStatus, setResetStatus] = useState(null); // null | 'sending' | 'sent' | 'error'
   const [resetMessage, setResetMessage] = useState("");
+  const [resetDevUrl, setResetDevUrl] = useState("");
   const { token } = useAuth();
 
   // Change the initial state
@@ -45,6 +46,7 @@ useEffect(() => {
   const handleResetPassword = async () => {
     setResetStatus('sending');
     setResetMessage('');
+    setResetDevUrl('');
 
     try {
       const data = await apiRequest('/api/auth/request-password-reset', {
@@ -56,12 +58,15 @@ useEffect(() => {
         ? `Reset link sent to ${data.email}`
         : 'Password reset link has been sent to your email.'
       );
+      setResetDevUrl(data.resetUrl || '');
 
       // Auto-dismiss after 8 seconds
-      setTimeout(() => {
-        setResetStatus(null);
-        setResetMessage('');
-      }, 8000);
+      if (!data.resetUrl) {
+        setTimeout(() => {
+          setResetStatus(null);
+          setResetMessage('');
+        }, 8000);
+      }
     } catch (err) {
       setResetStatus('error');
       setResetMessage(err.message || 'Failed to send reset link.');
@@ -129,13 +134,25 @@ useEffect(() => {
         {/* Reset password notification */}
         {resetStatus === 'sent' && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
+            display: 'flex', alignItems: 'flex-start', gap: '10px',
             padding: '12px 16px', marginBottom: '16px', borderRadius: '10px',
             backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0',
             animation: 'resetNotifSlideIn 0.3s ease-out'
           }}>
             <span style={{ fontSize: '18px' }}>✅</span>
-            <span style={{ color: '#166534', fontSize: '14px', fontWeight: '500' }}>{resetMessage}</span>
+            <div>
+              <span style={{ color: '#166534', fontSize: '14px', fontWeight: '500' }}>{resetMessage}</span>
+              {resetDevUrl && (
+                <div style={{ marginTop: '8px' }}>
+                  <p style={{ color: '#166534', fontSize: '13px', margin: '0 0 4px 0' }}>
+                    Email is not configured locally. Use this development reset link:
+                  </p>
+                  <a href={resetDevUrl} style={{ color: '#4f46e5', fontSize: '13px', wordBreak: 'break-all' }}>
+                    {resetDevUrl}
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
         {resetStatus === 'error' && (

@@ -10,6 +10,21 @@ const router = Router();
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "http://localhost:5173";
 
+function devResetPayload(delivery) {
+  const shouldExposeResetLink =
+    process.env.EXPOSE_RESET_LINK === "true" &&
+    process.env.NODE_ENV !== "production";
+
+  if (!shouldExposeResetLink && delivery?.sent) {
+    return {};
+  }
+
+  return {
+    emailSent: Boolean(delivery?.sent),
+    resetUrl: delivery?.resetUrl,
+  };
+}
+
 /**
  * POST /api/auth/forgot-password
  * Public — user provides their email (from the sign-in page).
@@ -36,11 +51,13 @@ router.post("/forgot-password", async (req, res) => {
     const token = await PasswordResetToken.createToken(user._id);
     const resetUrl = `${FRONTEND_URL}/reset-password/${token}`;
 
-    await sendPasswordResetEmail(user.email, resetUrl);
+    const delivery = await sendPasswordResetEmail(user.email, resetUrl);
+    delivery.resetUrl = resetUrl;
 
     res.json({
       message:
         "If an account with that email exists, a password reset link has been sent.",
+      ...devResetPayload(delivery),
     });
   } catch (err) {
     console.error("Forgot password error:", err);
@@ -64,10 +81,12 @@ router.post("/request-password-reset", requireAuth, async (req, res) => {
     const token = await PasswordResetToken.createToken(user._id);
     const resetUrl = `${FRONTEND_URL}/reset-password/${token}`;
 
-    await sendPasswordResetEmail(user.email, resetUrl);
+    const delivery = await sendPasswordResetEmail(user.email, resetUrl);
+    delivery.resetUrl = resetUrl;
 
     res.json({
       message: "Password reset link has been sent to your email.",
+      ...devResetPayload(delivery),
       // Send a masked version of the email for the UI notification
       email: user.email.replace(
         /(.{2})(.*)(@.*)/,
