@@ -38,6 +38,74 @@
   body {
     @apply bg-surface-50 text-surface-700 antialiased;
     font-family: var(--font-sans);
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+
+  /*
+   * Dark mode — override Tailwind theme tokens so that every existing
+   * utility class (bg-surface-50, text-surface-800, border-surface-200, …)
+   * automatically gets dark-appropriate values.  No component changes needed.
+   */
+  .dark {
+    /* Surface scale — dark backgrounds, light text */
+    --color-surface-50:  #16162a;
+    --color-surface-100: #1e1e36;
+    --color-surface-200: #2d2d48;
+    --color-surface-300: #40405a;
+    --color-surface-400: #8888a2;
+    --color-surface-500: #a0a0b8;
+    --color-surface-600: #b8b8cc;
+    --color-surface-700: #d0d0e0;
+    --color-surface-800: #e4e4f0;
+    --color-surface-900: #f2f2f8;
+
+    /* Accent scale — slightly brighter on dark backgrounds */
+    --color-accent-50:  #1e1a3a;
+    --color-accent-100: #2a2550;
+    --color-accent-200: #3d3570;
+    --color-accent-300: #6050b0;
+    --color-accent-400: #8a78e0;
+    --color-accent-500: #8b6fff;
+    --color-accent-600: #a48aff;
+    --color-accent-700: #bda8ff;
+    --color-accent-800: #d5c8ff;
+    --color-accent-900: #ede8ff;
+
+    /* Success */
+    --color-success-400: #34d399;
+    --color-success-500: #22c55e;
+    --color-success-600: #4ade80;
+
+    /* Danger */
+    --color-danger-400: #fb7185;
+    --color-danger-500: #f43f5e;
+    --color-danger-600: #fb7185;
+
+    color-scheme: dark;
+  }
+
+  /* Override Tailwind's built-in `bg-white` in dark mode */
+  .dark .bg-white {
+    background-color: var(--color-surface-100) !important;
+  }
+
+  /* Override `bg-white/80` (used in header with backdrop-blur) */
+  .dark .bg-white\/80 {
+    background-color: rgba(30, 30, 54, 0.85) !important;
+  }
+
+  /* Override gray-* used in some filter components */
+  .dark .bg-gray-100 {
+    background-color: var(--color-surface-200) !important;
+  }
+  .dark .text-gray-500 {
+    color: var(--color-surface-400) !important;
+  }
+  .dark .text-gray-700 {
+    color: var(--color-surface-700) !important;
+  }
+  .dark .border-gray-200 {
+    border-color: var(--color-surface-300) !important;
   }
 }
 
