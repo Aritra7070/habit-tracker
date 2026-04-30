@@ -24,6 +24,7 @@ export default function AppLayout() {
   const { token } = useAuth();
   const location = useLocation();
   const [reminders, setReminders] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [alertQueue, setAlertQueue] = useState([]);
   const alertedRef = useRef(new Set());
 
@@ -34,8 +35,12 @@ export default function AppLayout() {
         return;
       }
       try {
-        const data = await apiRequest("/api/habits/reminders?scope=all", { token });
+        const [data, settingsData] = await Promise.all([
+          apiRequest("/api/habits/reminders?scope=all", { token }),
+          apiRequest("/api/settings", { token }),
+        ]);
         setReminders(data);
+        setSettings(settingsData.settings);
       } catch (err) {
         console.error("Failed to fetch reminders", err);
         setReminders([]);
@@ -59,13 +64,36 @@ export default function AppLayout() {
       const todayName = DAY_NAMES[now.getDay()];
       const todayKey = getLocalDateKey(now);
       const completionKey = getCompletionDateKey(now);
+      const offMode = settings?.offMode;
+      const isOffDay = Boolean(
+        offMode?.vacationMode ||
+          (offMode?.start && offMode?.end && todayKey >= offMode.start && todayKey <= offMode.end) ||
+          offMode?.offDays?.includes(todayName)
+      );
       const dueReminders = [];
+
+      if (isOffDay) {
+        return;
+      }
 
       reminders.forEach((habit) => {
         const isScheduledToday = habit.schedule?.includes(todayName);
         const completedToday = habit.completions?.includes(completionKey);
+        const reminderTimes = habit.reminderTimes?.length
+          ? habit.reminderTimes
+          : habit.reminderTime
+            ? [habit.reminderTime]
+            : [];
+        const canShowInAppReminder = ["push", "both"].includes(
+          habit.notificationType || "push"
+        );
 
-        if (!completedToday && isScheduledToday && habit.reminderTime === currentTimeStr) {
+        if (
+          !completedToday &&
+          isScheduledToday &&
+          canShowInAppReminder &&
+          reminderTimes.includes(currentTimeStr)
+        ) {
           const alertKey = `${habit._id}-${todayKey}-${currentTimeStr}`;
           if (!alertedRef.current.has(alertKey)) {
             dueReminders.push(habit);
@@ -87,7 +115,7 @@ export default function AppLayout() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [reminders]);
+  }, [reminders, settings]);
 
   return (
     <div className="min-h-screen bg-surface-50">
