@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { apiRequest } from "../utils/api";
 
 const AuthContext = createContext(null);
@@ -86,7 +86,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  const value = { user, token, isLoading, signup, signin, googleSignIn, signout };
+  const updateUser = useCallback((userData) => {
+    setUser(userData);
+  }, []);
+
+  const value = { user, token, isLoading, signup, signin, googleSignIn, signout, updateUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
