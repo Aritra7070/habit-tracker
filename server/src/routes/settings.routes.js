@@ -50,7 +50,9 @@ function formatSettings(user) {
       emailNotifications:
         settings.emailNotifications ?? DEFAULT_SETTINGS.emailNotifications,
       reminderDefaults: {
-        times: settings.reminderDefaults?.times || DEFAULT_SETTINGS.reminderDefaults.times,
+        times:
+          settings.reminderDefaults?.times ||
+          DEFAULT_SETTINGS.reminderDefaults.times,
         notificationType:
           settings.reminderDefaults?.notificationType ||
           DEFAULT_SETTINGS.reminderDefaults.notificationType,
@@ -75,7 +77,7 @@ function formatSettings(user) {
   };
 }
 
-function validateOffMode(offMode) {
+function validateOffMode(offMode = {}) {
   const value = {
     start: offMode?.start || "",
     end: offMode?.end || "",
@@ -85,7 +87,7 @@ function validateOffMode(offMode) {
   };
 
   if (!value.start && !value.end) {
-    return { valid: true, value: { ...value, start: "", end: "" } };
+    return { valid: true, value };
   }
 
   if (!DATE_KEY_REGEX.test(value.start) || !DATE_KEY_REGEX.test(value.end)) {
@@ -142,6 +144,7 @@ router.get("/", async (req, res) => {
 
     res.json(formatSettings(user));
   } catch (err) {
+    console.error("Fetch settings error:", err);
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
@@ -207,7 +210,6 @@ router.put("/", async (req, res) => {
       if (!offModeCheck.valid) {
         return res.status(400).json({ error: offModeCheck.message });
       }
-
       user.settings.offMode = offModeCheck.value;
     }
 
@@ -216,7 +218,6 @@ router.put("/", async (req, res) => {
       if (!reminderCheck.valid) {
         return res.status(400).json({ error: reminderCheck.message });
       }
-
       user.settings.reminderDefaults = reminderCheck.value;
     }
 
@@ -225,13 +226,13 @@ router.put("/", async (req, res) => {
       if (!localeCheck.valid) {
         return res.status(400).json({ error: localeCheck.message });
       }
-
       user.settings.locale = localeCheck.value;
     }
 
     await user.save();
     res.json(formatSettings(user));
   } catch (err) {
+    console.error("Update settings error:", err);
     res.status(500).json({ error: "Failed to update settings" });
   }
 });
