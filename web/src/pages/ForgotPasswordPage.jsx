@@ -7,7 +7,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const [devResetUrl, setDevResetUrl] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,11 +20,10 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const data = await apiRequest("/api/auth/forgot-password", {
+      await apiRequest("/api/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify({ email }),
       });
-      setDevResetUrl(data.resetUrl || "");
       setIsEmailSent(true);
     } catch (err) {
       setError(err.message);
@@ -73,20 +71,6 @@ export default function ForgotPasswordPage() {
               we've sent a password reset link. Please check your inbox
               and spam folder.
             </p>
-
-            {devResetUrl && (
-              <div className="mb-6 rounded-lg border border-accent-400/30 bg-accent-500/10 p-4 text-left">
-                <p className="mb-2 text-sm font-medium text-accent-200">
-                  Email is not configured locally. Use this development reset link:
-                </p>
-                <a
-                  href={devResetUrl}
-                  className="break-all text-sm text-primary-300 underline hover:text-primary-200"
-                >
-                  {devResetUrl}
-                </a>
-              </div>
-            )}
 
             <Link
               to="/signin"

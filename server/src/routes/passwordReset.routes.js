@@ -15,7 +15,7 @@ function devResetPayload(delivery) {
     process.env.EXPOSE_RESET_LINK === "true" &&
     process.env.NODE_ENV !== "production";
 
-  if (!shouldExposeResetLink && delivery?.sent) {
+  if (!shouldExposeResetLink) {
     return {};
   }
 
