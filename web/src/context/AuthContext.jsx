@@ -70,13 +70,23 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  async function googleSignIn(googleToken) {
+    const data = await apiRequest("/api/auth/google-signin", {
+      method: "POST",
+      body: JSON.stringify({ googleToken }),
+    });
+
+    saveSession(data.token, data.user);
+    return data;
+  }
+
   function signout() {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
   }
 
-  const value = { user, token, isLoading, signup, signin, signout };
+  const value = { user, token, isLoading, signup, signin, googleSignIn, signout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
