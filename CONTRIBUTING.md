@@ -61,7 +61,28 @@ git clone https://github.com/quantum2code/habit-tracker
 # Go into the project
 cd habit-tracker
 
-# Install dependencies
+# Install dependencies for both backend and frontend
 npm install
+cd web && npm install && cd ..
+cd server && npm install && cd ..
 ```
+
+### Setting Up Google OAuth for Development
+
+1. Create OAuth 2.0 credentials in [Google Cloud Console](https://console.cloud.google.com/)
+2. Set authorized origins to `http://localhost:5173` and `http://localhost:3000`
+3. Create `.env` files:
+
+**server/.env:**
+```env
+GOOGLE_CLIENT_ID=your_client_id_here
+# ... other variables
+```
+
+**web/.env:**
+```env
+VITE_GOOGLE_CLIENT_ID=your_client_id_here
+VITE_API_URL=http://localhost:3000
+```
+
 - Then follow the instructions in README.md to run the project.

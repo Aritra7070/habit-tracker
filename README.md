@@ -15,7 +15,7 @@ A minimal web app to track daily habits and build consistency
 - Frontend: `React`
 - Server: `Express`
 - Database: `MongoDB`
-- Auth: `JWT`
+- Auth: `JWT` + `Google OAuth 2.0`
 
 ## ✅ Feature TODOs\*
 
@@ -27,6 +27,7 @@ Features planned for the app are listed below; check boxes track progress.
 - [x] User login
 - [x] JWT authentication
 - [x] Protected routes
+- [x] Google OAuth 2.0 login
 
 ### 📝 Habit Management
 
@@ -61,6 +62,38 @@ Features planned for the app are listed below; check boxes track progress.
 ### Requirements
 
 - Node.js: `^22.14.0`
+- Google OAuth 2.0 Credentials (for Google login feature)
+
+### Environment Variables Setup
+
+#### Backend (`server/.env`)
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+PORT=3000
+GOOGLE_CLIENT_ID=your_google_client_id
+FRONTEND_URL=http://localhost:5173
+# ... other env variables
+```
+
+#### Frontend (`web/.env`)
+
+```env
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+VITE_API_URL=http://localhost:3000
+```
+
+### Setting Up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials:
+   - Type: Web application
+   - Authorized JavaScript origins: `http://localhost:5173`, `http://localhost:3000`
+   - Authorized redirect URIs: `http://localhost:5173`
+5. Copy your **Client ID** and add it to both `.env` files
 
 ```bash
 # 1. Clone the repo
