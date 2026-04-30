@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.routes.js";
 import habitRoutes from "./routes/habits.routes.js";
 import noteRoutes from "./routes/notes.routes.js";
 import pushRoutes from "./routes/push.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 import { requireAuth } from "./middleware/auth.middleware.js";
 import { startReminderScheduler } from "./services/reminderScheduler.js";
 
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/habits", requireAuth, habitRoutes);
 app.use("/api/notes", requireAuth, noteRoutes);
 app.use("/api/push", requireAuth, pushRoutes);
+app.use("/api/settings", requireAuth, settingsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Habit Tracker API is running");
