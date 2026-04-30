@@ -93,6 +93,15 @@ export default function SigninPage() {
               />
             </div>
 
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}

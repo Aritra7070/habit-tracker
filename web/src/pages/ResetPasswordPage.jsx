@@ -1,0 +1,310 @@
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "../utils/api";
+
+export default function ResetPasswordPage() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isTokenValid, setIsTokenValid] = useState(false);
+  const [isResetComplete, setIsResetComplete] = useState(false);
+
+  // Verify the token when the page loads
+  useEffect(() => {
+    async function verifyToken() {
+      try {
+        const data = await apiRequest(
+          `/api/auth/verify-reset-token/${token}`
+        );
+        setIsTokenValid(data.valid);
+      } catch {
+        setIsTokenValid(false);
+      } finally {
+        setIsVerifying(false);
+      }
+    }
+    verifyToken();
+  }, [token]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    if (!password) {
+      setError("New password is required");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await apiRequest("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, password }),
+      });
+      setIsResetComplete(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // Loading state — verifying token
+  if (isVerifying) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-3 border-primary-500 border-t-transparent" />
+          <p className="text-surface-400 text-sm">Verifying your reset link…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Invalid / expired token
+  if (!isTokenValid) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border border-surface-800 bg-surface-900 p-8 shadow-xl shadow-black/20 text-center">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-danger-500/15">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-7 w-7 text-danger-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-xl font-bold text-white">
+              Link expired or invalid
+            </h2>
+            <p className="mb-6 text-surface-400 text-sm leading-relaxed">
+              This password reset link has expired or is invalid.
+              Please request a new one.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                to="/forgot-password"
+                className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+              >
+                Request new link
+              </Link>
+              <Link
+                to="/signin"
+                className="rounded-lg bg-surface-800 px-6 py-2.5 text-sm font-medium text-surface-300 transition-colors hover:bg-surface-700 hover:text-white"
+              >
+                Back to Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Success state — password was reset
+  if (isResetComplete) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border border-surface-800 bg-surface-900 p-8 shadow-xl shadow-black/20 text-center">
+            <div
+              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(74,222,128,0.1) 100%)",
+                animation: "resetSuccessPulse 2s ease-in-out infinite",
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-success-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-xl font-bold text-white">
+              Password reset successful!
+            </h2>
+            <p className="mb-6 text-surface-400 text-sm leading-relaxed">
+              Your password has been updated. You can now sign in with your new password.
+            </p>
+            <button
+              onClick={() => navigate("/signin", { replace: true })}
+              className="cursor-pointer rounded-lg bg-primary-600 px-8 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-900"
+            >
+              Go to Sign in
+            </button>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes resetSuccessPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.06); opacity: 0.9; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Reset form
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-600/20">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-7 w-7 text-primary-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white">Set new password</h1>
+          <p className="mt-2 text-surface-400">
+            Your new password must be at least 6 characters
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-2xl border border-surface-800 bg-surface-900 p-8 shadow-xl shadow-black/20">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-400">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label
+                htmlFor="reset-password"
+                className="mb-1.5 block text-sm font-medium text-surface-300"
+              >
+                New password
+              </label>
+              <input
+                id="reset-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password"
+                autoComplete="new-password"
+                autoFocus
+                className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-white placeholder-surface-500 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="reset-confirm-password"
+                className="mb-1.5 block text-sm font-medium text-surface-300"
+              >
+                Confirm password
+              </label>
+              <input
+                id="reset-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                autoComplete="new-password"
+                className="w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-white placeholder-surface-500 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+
+            {/* Password strength hint */}
+            {password && (
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex gap-1 flex-1">
+                  <div
+                    className="h-1 flex-1 rounded-full transition-colors"
+                    style={{
+                      backgroundColor:
+                        password.length >= 6 ? "#22c55e" : "#374151",
+                    }}
+                  />
+                  <div
+                    className="h-1 flex-1 rounded-full transition-colors"
+                    style={{
+                      backgroundColor:
+                        password.length >= 8 ? "#22c55e" : "#374151",
+                    }}
+                  />
+                  <div
+                    className="h-1 flex-1 rounded-full transition-colors"
+                    style={{
+                      backgroundColor:
+                        password.length >= 10 &&
+                        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)
+                          ? "#22c55e"
+                          : "#374151",
+                    }}
+                  />
+                </div>
+                <span className="text-surface-500">
+                  {password.length < 6
+                    ? "Too short"
+                    : password.length < 8
+                    ? "Fair"
+                    : password.length < 10
+                    ? "Good"
+                    : "Strong"}
+                </span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full cursor-pointer rounded-lg bg-primary-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? "Resetting…" : "Reset password"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ import express from "express";
 import cors from "cors";
 import { connectDB } from "./db.js";
 import authRoutes from "./routes/auth.routes.js";
+import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import habitRoutes from "./routes/habits.routes.js";
 import noteRoutes from "./routes/notes.routes.js";
 import pushRoutes from "./routes/push.routes.js";
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", passwordResetRoutes);
 app.use("/api/habits", requireAuth, habitRoutes);
 app.use("/api/notes", requireAuth, noteRoutes);
 app.use("/api/push", requireAuth, pushRoutes);
