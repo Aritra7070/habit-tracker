@@ -27,21 +27,40 @@ export function AuthProvider({ children }) {
 
   // Restore session from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
+    let isMounted = true;
 
-    if (storedToken) {
-      const parsed = parseToken(storedToken);
+    async function restoreSession() {
+      const storedToken = localStorage.getItem(TOKEN_KEY);
 
-      if (parsed) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setToken(storedToken);
-        setUser(parsed);
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
+      if (storedToken) {
+        const parsed = parseToken(storedToken);
+
+        if (parsed) {
+          try {
+            const data = await apiRequest("/api/settings", { token: storedToken });
+
+            if (isMounted) {
+              setToken(storedToken);
+              setUser(data.user);
+            }
+          } catch {
+            localStorage.removeItem(TOKEN_KEY);
+          }
+        } else {
+          localStorage.removeItem(TOKEN_KEY);
+        }
+      }
+
+      if (isMounted) {
+        setIsLoading(false);
       }
     }
 
-    setIsLoading(false);
+    restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   function saveSession(tokenValue, userData) {

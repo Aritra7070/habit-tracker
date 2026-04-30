@@ -11,6 +11,9 @@ export default function SigninPage() {
 
   const { signin, googleSignIn } = useAuth();
   const navigate = useNavigate();
+  const forgotPasswordPath = email.trim()
+    ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
+    : "/forgot-password";
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (codeResponse) => {
@@ -143,10 +146,10 @@ export default function SigninPage() {
               />
             </div>
 
-            <div className="flex justify-end">
+            <div>
               <Link
-                to="/forgot-password"
-                className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
+                to={forgotPasswordPath}
+                className="block w-full rounded-lg border border-surface-700 bg-surface-800 px-4 py-2.5 text-center text-sm font-medium text-surface-300 transition-colors hover:bg-surface-700 hover:text-white"
               >
                 Forgot password?
               </Link>

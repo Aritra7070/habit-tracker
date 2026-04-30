@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import App from "./App.jsx";
 import "./index.css";
 
@@ -10,6 +11,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_C
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+  <ThemeProvider>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter>
         <AuthProvider>
@@ -17,5 +19,6 @@ createRoot(document.getElementById("root")).render(
         </AuthProvider>
       </BrowserRouter>
     </GoogleOAuthProvider>
+  </ThemeProvider>
   </StrictMode>
 );

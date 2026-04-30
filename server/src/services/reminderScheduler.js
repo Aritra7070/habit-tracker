@@ -2,11 +2,33 @@ import cron from "node-cron";
 import webpush from "web-push";
 import Habit from "../models/Habit.js";
 import PushSubscription from "../models/PushSubscription.js";
+import User from "../models/User.js";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getTodayCompletionKey() {
   return new Date().toISOString().split("T")[0];
+}
+
+function getTodayDateKey() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function isOffModeActive(settings, dayName) {
+  const offMode = settings?.offMode;
+
+  if (!offMode) {
+    return false;
+  }
+
+  const today = getTodayDateKey();
+  const inTimeline = offMode.start && offMode.end && today >= offMode.start && today <= offMode.end;
+
+  return Boolean(
+    offMode.vacationMode ||
+      inTimeline ||
+      offMode.offDays?.includes(dayName)
+  );
 }
 
 function getReminderWindow(timeZone = "UTC") {
@@ -89,8 +111,9 @@ async function sendReminder(subscription, habit) {
 async function sendDueReminders() {
   const habits = await Habit.find({
     hasReminder: true,
-    reminderTime: { $ne: "" },
-  }).select("_id userId name reminderTime reminderTimezone schedule completions");
+  }).select(
+    "_id userId name reminderTime reminderTimes reminderTimezone notificationType schedule completions"
+  );
 
   if (habits.length === 0) {
     return;
@@ -103,12 +126,25 @@ async function sendDueReminders() {
 
     return (
       !completedToday &&
-      habit.reminderTime === time &&
+      (habit.reminderTimes?.length
+        ? habit.reminderTimes
+        : habit.reminderTime
+          ? [habit.reminderTime]
+          : []
+      ).includes(time) &&
+      ["push", "both"].includes(habit.notificationType || "push") &&
       habit.schedule.includes(dayName)
     );
   });
 
   for (const habit of dueHabits) {
+    const { dayName } = getReminderWindow(habit.reminderTimezone);
+    const user = await User.findById(habit.userId).select("settings");
+
+    if (isOffModeActive(user?.settings, dayName)) {
+      continue;
+    }
+
     const subscriptions = await PushSubscription.find({ userId: habit.userId });
 
     await Promise.all(

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../utils/api";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
@@ -152,7 +153,7 @@ export default function ForgotPasswordPage() {
               disabled={isSubmitting}
               className="w-full cursor-pointer rounded-lg bg-primary-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Sending link…" : "Send reset link"}
+              {isSubmitting ? "Sending link..." : "Reset password"}
             </button>
           </form>
 
